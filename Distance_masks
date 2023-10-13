@@ -1,0 +1,49 @@
+from google.colab import drive
+drive.mount('/content/drive')
+
+import os
+!pip install rasterio
+import geopandas as gpd
+import cv2
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import rasterio
+from shapely.geometry import Polygon
+from shapely.ops import cascaded_union
+from rasterio.features import rasterize
+
+import cv2
+import numpy as np
+import os
+
+def get_distance(label):
+    tlabel = label.astype(np.uint8)
+    dist = cv2.distanceTransform(tlabel, cv2.DIST_L2, 0)
+    dist = cv2.normalize(dist, dist, 0, 1.0, cv2.NORM_MINMAX)
+    return dist
+
+def read_mask(file_path):
+    mask = cv2.imread(file_path, 0)
+    mask = (mask > 0).astype(np.uint8)
+    return mask
+
+# Folder containing the mask files
+mask_folder = '/content/drive/MyDrive/masks_filled'  # Replace with the actual path to the folder containing the mask files
+
+# Output folder for distance masks
+output_folder = '/content/drive/MyDrive/distance_masks'  # Replace with the desired output folder path
+
+# Iterate over the mask files in the folder
+for file_name in os.listdir(mask_folder):
+    file_path = os.path.join(mask_folder, file_name)
+    mask = read_mask(file_path)
+    distance_mask = get_distance(mask)
+
+    # Save the distance mask with a corresponding file name
+    output_file = os.path.join(output_folder, file_name.replace('.tif', '_distance.tif'))
+    cv2.imwrite(output_file, (distance_mask * 255).astype(np.uint8))
+
+    print(f"Distance mask saved for {file_name}")
+
+print("Distance masks for all images processed successfully.")
